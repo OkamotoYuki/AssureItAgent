@@ -5,36 +5,85 @@ import debug = module('debug');
 
 export class RequestHandler {
 
-	request: http.ServerRequest;
-	response: http.ServerResponse;
-	httpStatusCode: number;
+	private request: Request;
 
-	constructor(request: http.ServerRequest, response: http.ServerResponse) {
-		this.request = request;
+	constructor(serverRequest: http.ServerRequest) {
+		this.request = new Request(serverRequest);
+	}
+
+	activate(serverResponse: http.ServerResponse): void {
+		var self = this;
+
+		this.request.serverRequest.on('data', function(chunk: string) {
+			self.request.body += chunk;
+		});
+
+		this.request.serverRequest.on('end', function() {
+			var response = new Response(serverResponse);
+
+			if(self.request.method != 'POST') {
+				response.statusCode = 400;
+				response.send()
+				return;
+			}
+
+			var api = new AssureItAgentAPI(self.request.body, response);
+			api.invoke();
+		});
+	}
+
+}
+
+class Request {
+
+	serverRequest: http.ServerRequest;
+	method: string;
+	body: string;
+
+	constructor(serverRequest: http.ServerRequest) {
+		this.serverRequest = serverRequest;
+		this.method = this.serverRequest.method;
+		this.body = "";
+	}
+}
+
+class Response {
+
+	serverResponse: http.ServerResponse;
+	body: string;
+	statusCode: number;
+
+	constructor(serverResponse: http.ServerResponse) {
+		this.serverResponse = serverResponse;
+		this.body = "";
+		this.statusCode = 200;
+	}
+
+	send(): void {
+		this.serverResponse.write(this.body);
+		this.serverResponse.writeHead(this.statusCode, {'Content-Type': 'application/json'});
+		this.serverResponse.end();
+	}
+
+}
+
+class AssureItAgentAPI {
+
+	private cmd: string;
+	private response: Response;
+
+	constructor(cmd: string, response: Response) {
+		this.cmd = cmd;
 		this.response = response;
-		this.httpStatusCode = 200;
-
-		if(request.method != 'POST') {
-			debug.outputErrorMessage("AssureItAgent allows 'POST' method only");
-			this.response.write("AssureItAgent allows 'POST' method only"); // FIXME: replace it as json
-			this.httpStatusCode = 400;
-		}
 	}
 
-	invokeHandlerAPI(): void/* FIXME */ {
-		if(this.httpStatusCode != 200) return;
+	invoke(): void {
 		// TODO: imple me
+		this.response.send();
 	}
 
-	executeScript(): void/* FIXME */ {
-		if(this.httpStatusCode != 200) return;
+	executeScript(): void {
 		// TODO: imple me
-	}
-
-	sendResponse(): void/* FIXME */ {
-		// TODO
-		this.response.writeHead(this.httpStatusCode, {'Content-Type': 'application/json'});
-		this.response.end();
 	}
 
 }
