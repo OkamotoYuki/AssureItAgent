@@ -1,5 +1,5 @@
 export function outputDebugMessage(obj: Object) {
-	console.log(obj);
+	console.log("debug: " + obj);
 }
 
 export function outputErrorMessage(obj: Object) {
