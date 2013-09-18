@@ -10,6 +10,12 @@ interface JsonRpc {
 }
 
 
+interface JsonRpcRequest {
+	method: string;
+	params: any;
+}
+
+
 interface Error {
 	code: number;
 	message: string;
@@ -48,7 +54,9 @@ export class RequestHandler {
 				return;
 			}
 
-			var api = new AssureItAgentAPI(self.request.body, response);
+			var jsonrpc = JSON.parse(self.request.body);
+
+			var api = new AssureItAgentAPI(<JsonRpcRequest>jsonrpc, response);
 			api.Invoke();
 		});
 	}
@@ -118,21 +126,28 @@ class Response {
 
 class AssureItAgentAPI {
 
-	private cmd: string;
+	private jsonrpc: JsonRpcRequest;
 	private response: Response;
 
-	constructor(cmd: string, response: Response) {
-		this.cmd = cmd;
+	constructor(jsonrpc: JsonRpcRequest, response: Response) {
+		this.jsonrpc = jsonrpc;
 		this.response = response;
 	}
 
 	Invoke(): void {
-		// TODO: imple me
-		this.response.Send();
+		try {
+			this[this.jsonrpc.method](this.jsonrpc.params);
+		}
+		catch(e) {
+			this.response.SetStatusCode(400);
+			this.response.SetError({ code: -1, message: "Assure-It agent doesn't have such a method" });   // TODO: fix code
+			this.response.Send();
+		}
 	}
 
-	ExecuteScript(): void {
+	ExecuteScript(params: any): void {
 		// TODO: imple me
+		this.response.Send();
 	}
 
 }

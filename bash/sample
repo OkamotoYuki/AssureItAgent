@@ -3,7 +3,7 @@
 ## JSONRPC
 jsonrpc='"2.0"'
 id='0'
-method='"test"'
+method='"ExecuteScript"'
 params='{}'
 agent_url='localhost:8081'
 

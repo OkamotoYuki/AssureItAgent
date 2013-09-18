@@ -29,7 +29,9 @@ var RequestHandler = (function () {
                 return;
             }
 
-            var api = new AssureItAgentAPI(self.request.body, response);
+            var jsonrpc = JSON.parse(self.request.body);
+
+            var api = new AssureItAgentAPI(jsonrpc, response);
             api.Invoke();
         });
     };
@@ -84,15 +86,22 @@ var Response = (function () {
 })();
 
 var AssureItAgentAPI = (function () {
-    function AssureItAgentAPI(cmd, response) {
-        this.cmd = cmd;
+    function AssureItAgentAPI(jsonrpc, response) {
+        this.jsonrpc = jsonrpc;
         this.response = response;
     }
     AssureItAgentAPI.prototype.Invoke = function () {
-        this.response.Send();
+        try  {
+            this[this.jsonrpc.method](this.jsonrpc.params);
+        } catch (e) {
+            this.response.SetStatusCode(400);
+            this.response.SetError({ code: -1, message: "Assure-It agent doesn't have such a method" });
+            this.response.Send();
+        }
     };
 
-    AssureItAgentAPI.prototype.ExecuteScript = function () {
+    AssureItAgentAPI.prototype.ExecuteScript = function (params) {
+        this.response.Send();
     };
     return AssureItAgentAPI;
 })();
