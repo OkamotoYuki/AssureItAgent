@@ -1,0 +1,15 @@
+#!/bin/bash
+
+## JSONRPC
+jsonrpc='"2.0"'
+id='0'
+method='"test"'
+params='{}'
+agent_url='localhost:8081'
+
+function test() {
+	local request='{"jsonrpc":'$jsonrpc',"id":'$id',"method":'$method',"params":'$params'}'
+	curl -H 'Content-Type: application/json' -d $request $agent_url
+}
+
+test

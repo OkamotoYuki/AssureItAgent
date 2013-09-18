@@ -3,6 +3,19 @@
 import http = module('http');
 import debug = module('debug');
 
+
+interface JsonRpc {
+	jsonrpc: string;
+	id: number;
+}
+
+
+interface Error {
+	code: number;
+	message: string;
+}
+
+
 export class RequestHandler {
 
 	private request: Request;
@@ -11,7 +24,7 @@ export class RequestHandler {
 		this.request = new Request(serverRequest);
 	}
 
-	activate(serverResponse: http.ServerResponse): void {
+	Activate(serverResponse: http.ServerResponse): void {
 		var self = this;
 
 		this.request.serverRequest.on('data', function(chunk: string) {
@@ -22,17 +35,26 @@ export class RequestHandler {
 			var response = new Response(serverResponse);
 
 			if(self.request.method != 'POST') {
-				response.statusCode = 400;
-				response.send()
+				response.SetStatusCode(400);
+				response.SetError({ code: -1, message: 'AssureIt agent allows "POST"only' });   // TODO: fix code
+				response.Send();
+				return;
+			}
+
+			if(!self.request.IsValid()) {
+				response.SetStatusCode(400);
+				response.SetError({ code: -1, message: 'jsonrpc has invalid format' });   // TODO: fix code
+				response.Send();
 				return;
 			}
 
 			var api = new AssureItAgentAPI(self.request.body, response);
-			api.invoke();
+			api.Invoke();
 		});
 	}
 
 }
+
 
 class Request {
 
@@ -45,27 +67,54 @@ class Request {
 		this.method = this.serverRequest.method;
 		this.body = "";
 	}
+
+	IsValid(): boolean {
+		try {
+			var json = JSON.parse(this.body);
+			if(!(('jsonrpc' in json) && ('id' in json) && ('method' in json) && ('params' in json))) {   // json doesn't have enough data
+				return false;
+			}
+		}
+		catch(e) {
+			return false;   // parse error
+		}
+		return true;
+	}
 }
+
 
 class Response {
 
 	serverResponse: http.ServerResponse;
-	body: string;
+	body: JsonRpc;
 	statusCode: number;
 
 	constructor(serverResponse: http.ServerResponse) {
 		this.serverResponse = serverResponse;
-		this.body = "";
+		this.body = { jsonrpc: '2.0', id: 0 };
 		this.statusCode = 200;
 	}
 
-	send(): void {
-		this.serverResponse.write(this.body);
+	SetStatusCode(code: number) {
+		this.statusCode = code;
+	}
+
+	SetResult(result: number) {
+		this.body['result'] = result;
+	}
+
+	SetError(error: Error) {
+		this.body['error'] = error;
+	}
+
+	Send(): void {
 		this.serverResponse.writeHead(this.statusCode, {'Content-Type': 'application/json'});
+		this.serverResponse.write(JSON.stringify(this.body));
 		this.serverResponse.end();
 	}
 
 }
+
 
 class AssureItAgentAPI {
 
@@ -77,12 +126,12 @@ class AssureItAgentAPI {
 		this.response = response;
 	}
 
-	invoke(): void {
+	Invoke(): void {
 		// TODO: imple me
-		this.response.send();
+		this.response.Send();
 	}
 
-	executeScript(): void {
+	ExecuteScript(): void {
 		// TODO: imple me
 	}
 
