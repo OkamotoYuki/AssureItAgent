@@ -1,5 +1,6 @@
 
 
+var process = require('child_process');
 
 var RequestHandler = (function () {
     function RequestHandler(serverRequest) {
@@ -101,6 +102,19 @@ var AssureItAgentAPI = (function () {
     };
 
     AssureItAgentAPI.prototype.ExecuteScript = function (params) {
+        var self = this;
+        var type = params.type;
+        var script = params.script;
+
+        if (type == 'bash') {
+            process.exec('bash -c ' + script, null, function (error, stdout, stderr) {
+                console.log(stdout);
+            });
+        } else if (type == 'D-Shell') {
+        } else {
+            self.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
+        }
+
         this.response.Send();
     };
     return AssureItAgentAPI;

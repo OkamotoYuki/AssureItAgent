@@ -2,6 +2,7 @@
 
 import http = module('http');
 import debug = module('debug');
+import process = module('child_process');
 
 
 interface JsonRpc {
@@ -146,7 +147,21 @@ class AssureItAgentAPI {
 	}
 
 	ExecuteScript(params: any): void {
-		// TODO: imple me
+		var self = this;
+		var type = params.type;
+		var script = params.script;
+
+		if(type == 'bash') {
+			process.exec('bash -c '+script, null, function(error, stdout, stderr) {
+				console.log(stdout);
+			});
+		}
+		else if(type == 'D-Shell') {
+		}
+		else {
+			self.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
+		}
+
 		this.response.Send();
 	}
 
