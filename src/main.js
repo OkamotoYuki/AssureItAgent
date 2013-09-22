@@ -1,9 +1,7 @@
 var http = require('http');
 var handler = require("./handler");
-var config = require("./config");
-var debug = require("./debug");
 
-console.log(config.conf);
+var debug = require("./debug");
 
 http.createServer(function (request, response) {
     var requestHandler = new handler.RequestHandler(request);

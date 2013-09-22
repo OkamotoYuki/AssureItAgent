@@ -149,15 +149,23 @@ class AssureItAgentAPI {
 
 	ExecuteScript(params: any): void {
 		var self = this;
-		var type = params.type;
 		var script = params.script;
 
-		if(type == 'bash') {
+		if(config.conf.runtime == 'bash') {
 			process.exec('bash -c '+script, null, function(error, stdout, stderr) {
+				console.log('====OUT====');
 				console.log(stdout);
+				console.log('===ERROR===');
+				console.log(stderr);
 			});
 		}
-		else if(type == 'D-Shell') {
+		else if(config.conf.runtime == 'D-Shell') {
+			process.exec('greentea '+script, null, function(error, stdout, stderr) {
+				console.log('====OUT====');
+				console.log(stdout);
+				console.log('===ERROR===');
+				console.log(stderr);
+			});
 		}
 		else {
 			self.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
