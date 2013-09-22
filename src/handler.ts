@@ -1,8 +1,9 @@
 ///<reference path='../d.ts/DefinitelyTyped/node/node.d.ts'/>
 
 import http = module('http');
-import debug = module('debug');
 import process = module('child_process');
+import config = module('config');
+import debug = module('debug');
 
 
 interface JsonRpc {

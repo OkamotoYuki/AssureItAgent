@@ -2,7 +2,9 @@
 
 import http = module('http');
 import handler = module('handler');
+import config = module('config');
 import debug = module('debug');
+
 
 http.createServer(function(request: http.ServerRequest, response: http.ServerResponse): void {
 	var requestHandler = new handler.RequestHandler(request);
