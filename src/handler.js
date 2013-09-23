@@ -1,5 +1,6 @@
+var fs = require('fs');
 
-var process = require('child_process');
+var child_process = require('child_process');
 var config = require("./config");
 
 
@@ -106,15 +107,29 @@ var AssureItAgentAPI = (function () {
         var self = this;
         var script = params.script;
 
+        try  {
+            fs.statSync('/tmp/assureit-agent');
+        } catch (e) {
+            fs.mkdirSync('/tmp/assureit-agent');
+        }
+        try  {
+            fs.statSync('/tmp/assureit-agent/' + process.pid);
+        } catch (e) {
+            fs.mkdirSync('/tmp/assureit-agent/' + process.pid);
+        }
+
+        var scriptPath = '/tmp/assureit-agent/' + process.pid + '/main.ds';
+        fs.writeFileSync(scriptPath, script);
+
         if (config.conf.runtime == 'bash') {
-            process.exec('bash -c ' + script, null, function (error, stdout, stderr) {
+            child_process.exec('bash ' + scriptPath, null, function (error, stdout, stderr) {
                 console.log('====OUT====');
                 console.log(stdout);
                 console.log('===ERROR===');
                 console.log(stderr);
             });
         } else if (config.conf.runtime == 'D-Shell') {
-            process.exec('greentea ' + script, null, function (error, stdout, stderr) {
+            child_process.exec('greentea ' + scriptPath, null, function (error, stdout, stderr) {
                 console.log('====OUT====');
                 console.log(stdout);
                 console.log('===ERROR===');

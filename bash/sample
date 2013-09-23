@@ -4,7 +4,7 @@
 jsonrpc='"2.0"'
 id='0'
 method='"ExecuteScript"'
-params='{"script":"ls"}'
+params='{"script":"print(1);\n"}'
 agent_url='localhost:8081'
 
 function test() {

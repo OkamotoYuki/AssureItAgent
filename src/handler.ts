@@ -1,7 +1,8 @@
 ///<reference path='../d.ts/DefinitelyTyped/node/node.d.ts'/>
 
+import fs = module('fs');
 import http = module('http');
-import process = module('child_process');
+import child_process = module('child_process');
 import config = module('config');
 import debug = module('debug');
 
@@ -149,10 +150,29 @@ class AssureItAgentAPI {
 
 	ExecuteScript(params: any): void {
 		var self = this;
-		var script = params.script;
+		var script: string = params.script;
 
+		/* script directory */
+		try {
+			fs.statSync('/tmp/assureit-agent');
+		}
+		catch(e) {
+			fs.mkdirSync('/tmp/assureit-agent');
+		}
+		try {
+			fs.statSync('/tmp/assureit-agent/'+process.pid);
+		}
+		catch(e) {
+			fs.mkdirSync('/tmp/assureit-agent/'+process.pid);
+		}
+
+		/* set script */
+		var scriptPath: string = '/tmp/assureit-agent/'+process.pid+'/main.ds';
+		fs.writeFileSync(scriptPath, script);
+
+		/* execute script */
 		if(config.conf.runtime == 'bash') {
-			process.exec('bash -c '+script, null, function(error, stdout, stderr) {
+			child_process.exec('bash '+scriptPath, null, function(error, stdout, stderr) {
 				console.log('====OUT====');
 				console.log(stdout);
 				console.log('===ERROR===');
@@ -160,7 +180,7 @@ class AssureItAgentAPI {
 			});
 		}
 		else if(config.conf.runtime == 'D-Shell') {
-			process.exec('greentea '+script, null, function(error, stdout, stderr) {
+			child_process.exec('greentea '+scriptPath, null, function(error, stdout, stderr) {
 				console.log('====OUT====');
 				console.log(stdout);
 				console.log('===ERROR===');
