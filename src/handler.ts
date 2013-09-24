@@ -185,25 +185,31 @@ class AssureItAgentAPI {
 		}
 
 		/* execute script */
+		var command: string = "";
 		if(config.conf.runtime == 'bash') {
-			child_process.exec('bash '+scriptDir+'/'+mainFile, null, function(error, stdout, stderr) {
-				console.log('====OUT====');
-				console.log(stdout);
-				console.log('===ERROR===');
-				console.log(stderr);
-			});
+			command = 'bash ';
 		}
 		else if(config.conf.runtime == 'D-Shell') {
-			child_process.exec('greentea '+scriptDir+'/'+mainFile, null, function(error, stdout, stderr) {
-				console.log('====OUT====');
-				console.log(stdout);
-				console.log('===ERROR===');
-				console.log(stderr);
-			});
+			command = 'greentea ';
 		}
 		else {
 			this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
+			this.response.Send();
+			return;
 		}
+
+		for(var file in script.lib) {
+			command += ' '+scriptDir+'/'+file;
+		}
+		command += ' '+scriptDir+'/'+mainFile;
+
+		child_process.exec(command, null, function(error, stdout, stderr) {
+			console.log(command);
+			console.log('====OUT====');
+			console.log(stdout);
+			console.log('===ERROR===');
+			console.log(stderr);
+		});
 
 		this.response.Send();
 	}
