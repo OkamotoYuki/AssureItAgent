@@ -81,7 +81,7 @@ var Response = (function () {
     };
 
     Response.prototype.Send = function () {
-        this.serverResponse.writeHead(this.statusCode, { 'Content-Type': 'application/json' });
+        this.serverResponse.writeHead(this.statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         this.serverResponse.write(JSON.stringify(this.body));
         this.serverResponse.end();
     };
