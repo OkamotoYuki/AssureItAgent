@@ -3,8 +3,11 @@
 ## JSONRPC
 jsonrpc='"2.0"'
 id='0'
-method='"ExecuteScript"'
-params='{"script":"print(1);\n"}'
+method='"Deploy"'
+main='{"main.ds":"print(0);\n"}'
+lib='{"lib1.ds":"print(1);\n","lib2.ds":"print(2);\n"}'
+script='{"main":'$main',"lib":'$lib'}';
+params='{"script":'$script'}'
 agent_url='localhost:8081'
 
 function test() {

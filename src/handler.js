@@ -103,8 +103,7 @@ var AssureItAgentAPI = (function () {
         }
     };
 
-    AssureItAgentAPI.prototype.ExecuteScript = function (params) {
-        var self = this;
+    AssureItAgentAPI.prototype.Deploy = function (params) {
         var script = params.script;
 
         try  {
@@ -112,31 +111,45 @@ var AssureItAgentAPI = (function () {
         } catch (e) {
             fs.mkdirSync('/tmp/assureit-agent');
         }
+
+        var scriptDir = '/tmp/assureit-agent/' + process.pid;
         try  {
-            fs.statSync('/tmp/assureit-agent/' + process.pid);
+            fs.statSync(scriptDir);
         } catch (e) {
-            fs.mkdirSync('/tmp/assureit-agent/' + process.pid);
+            fs.mkdirSync(scriptDir);
         }
 
-        var scriptPath = '/tmp/assureit-agent/' + process.pid + '/main.ds';
-        fs.writeFileSync(scriptPath, script);
+        if (!("main" in script) || !(Object.keys(script.main).length == 1)) {
+            this.response.SetError({ code: -1, message: "request must have one main script" });
+            this.response.Send();
+            return;
+        }
+
+        var mainFile = Object.keys(script.main)[0];
+        fs.writeFileSync(scriptDir + '/' + mainFile, script.main[mainFile]);
+
+        if ("lib" in script) {
+            for (var file in script.lib) {
+                fs.writeFileSync(scriptDir + '/' + file, script.lib[file]);
+            }
+        }
 
         if (config.conf.runtime == 'bash') {
-            child_process.exec('bash ' + scriptPath, null, function (error, stdout, stderr) {
+            child_process.exec('bash ' + scriptDir + '/' + mainFile, null, function (error, stdout, stderr) {
                 console.log('====OUT====');
                 console.log(stdout);
                 console.log('===ERROR===');
                 console.log(stderr);
             });
         } else if (config.conf.runtime == 'D-Shell') {
-            child_process.exec('greentea ' + scriptPath, null, function (error, stdout, stderr) {
+            child_process.exec('greentea ' + scriptDir + '/' + mainFile, null, function (error, stdout, stderr) {
                 console.log('====OUT====');
                 console.log(stdout);
                 console.log('===ERROR===');
                 console.log(stderr);
             });
         } else {
-            self.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
+            this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
         }
 
         this.response.Send();
