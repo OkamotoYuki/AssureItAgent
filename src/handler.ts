@@ -222,10 +222,10 @@ class AssureItAgentAPI {
 				var codegen = function () {
 					entryScript += "\t\tDFault ret = "+actionKey+"();\n";
 					entryScript += "\t\tif(ret == null) {\n";
-					actionKey = action["reaction"];
-					if((actionKey != null) && (actionKey != "")) {
-						action = actionmap[actionKey];
-						if(action != null) {
+					if(action != null) {
+						actionKey = action["reaction"];
+						if((actionKey != null) && (actionKey != "")) {
+							action = actionmap[actionKey];
 							codegen();
 						}
 					}
