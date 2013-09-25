@@ -211,13 +211,14 @@ var AssureItAgentAPI = (function () {
 
         for (var i = 0; i < entryFiles.length; i++) {
             var command = commandHeader + ' ' + scriptDir + '/' + entryFiles[i];
+            debug.outputDebugMessage(command);
             var child = child_process.exec(command, null, function (error, stdout, stderr) {
             });
             child.stdout.on('data', function (chunk) {
-                debug.outputDebugMessage(chunk);
+                console.log(chunk);
             });
             child.stderr.on('data', function (chunk) {
-                debug.outputErrorMessage(chunk);
+                console.log(chunk);
             });
             status.stat.children.push(child);
         }
