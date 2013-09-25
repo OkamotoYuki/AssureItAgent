@@ -225,7 +225,9 @@ class AssureItAgentAPI {
 					actionKey = action["reaction"];
 					if((actionKey != null) && (actionKey != "")) {
 						action = actionmap[actionKey];
-						codegen();
+						if(action != null) {
+							codegen();
+						}
 					}
 					entryScript += "\t\t}\n";
 				}
