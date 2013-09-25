@@ -127,7 +127,10 @@ var AssureItAgentAPI = (function () {
         var configScript = "";
         configScript += 'require dshell;\n';
         configScript += 'command sleep;\n';
-        configScript += 'const LOCATION="' + config.conf.location + '";\n';
+        configScript += 'const LOCATION = "' + config.conf.location + '";\n';
+        configScript += 'let DCaseRevision = 2;\n';
+        configScript += 'let RecServer = "http://127.0.0.1:3001";\n';
+        configScript += 'let AssumedFault = "UnknownFault";\n';
         fs.writeFileSync(scriptDir + '/' + configFile, configScript);
 
         if (!('main' in script)) {
@@ -161,11 +164,12 @@ var AssureItAgentAPI = (function () {
 
             var entryScript = "";
             entryScript += "@Export void main() {\n";
+            entryScript += "\tRuntimeContext ctx = new RuntimeContext();\n";
             if ((actiontype != null) && (actiontype == "monitor")) {
                 entryScript += "\twhile(true) {\n";
 
                 var codegen = function () {
-                    entryScript += "\t\tDFault ret = " + actionKey + "();\n";
+                    entryScript += "\t\tDFault ret = " + actionKey + "(ctx);\n";
                     entryScript += "\t\tif(ret == null) {\n";
                     if (action != null) {
                         actionKey = action["reaction"];

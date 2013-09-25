@@ -178,7 +178,10 @@ class AssureItAgentAPI {
 		var configScript: string = "";
 		configScript += 'require dshell;\n';
 		configScript += 'command sleep;\n';
-		configScript += 'const LOCATION="'+config.conf.location+'";\n';
+		configScript += 'const LOCATION = "'+config.conf.location+'";\n';
+		configScript += 'let DCaseRevision = 2;\n';   // TODO: move to status.stat
+		configScript += 'let RecServer = "http://127.0.0.1:3001";\n';   // TODO: move to config.json
+		configScript += 'let AssumedFault = "UnknownFault";\n';   // TODO: move to config.json?
 		fs.writeFileSync(scriptDir+'/'+configFile, configScript);
 
 		/* set main script */
@@ -215,12 +218,13 @@ class AssureItAgentAPI {
 
 			var entryScript: string = "";
 			entryScript += "@Export void main() {\n";
+			entryScript += "\tRuntimeContext ctx = new RuntimeContext();\n";
 			if((actiontype != null) && (actiontype == "monitor")) {
 				entryScript += "\twhile(true) {\n";
 				//entryScript += "\t\tprint('monitoring...\\n');\n";
 
 				var codegen = function () {
-					entryScript += "\t\tDFault ret = "+actionKey+"();\n";
+					entryScript += "\t\tDFault ret = "+actionKey+"(ctx);\n";
 					entryScript += "\t\tif(ret == null) {\n";
 					if(action != null) {
 						actionKey = action["reaction"];
