@@ -209,8 +209,8 @@ class AssureItAgentAPI {
 			entryScript += "@Export void main() {\n";
 			if(entry[Object.keys(entry)[0]] == "monitor") {
 				entryScript += "\twhile(true) {\n";
-				entryScript += "\t\tprint('monitoring...\\n');\n";
-				//entryScript += "\t\t"+Object.keys(entry)[0]+"();\n";
+				//entryScript += "\t\tprint('monitoring...\\n');\n";
+				entryScript += "\t\t"+Object.keys(entry)[0]+"();\n";
 				entryScript += "\t\tsleep 1\n";
 				entryScript += "\t}\n";
 			}
