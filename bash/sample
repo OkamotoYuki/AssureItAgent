@@ -6,7 +6,7 @@ id='0'
 method='"Deploy"'
 main='"print(LOCATION);\n"' lib='{"lib1.ds":"print(1);\n","lib2.ds":"print(2);\n"}'
 script='{"main":'$main',"lib":'$lib'}';
-meta='{"entry":[{"E1":"monitor"}]}'
+meta='{"actionmap":{"E1":{"actiontype":"monitor","reaction":"E2"},"E2":{"actiontype":"normal","reaction":""}}}'
 params='{"script":'$script',"meta":'$meta'}'
 agent_url='localhost:8081'
 

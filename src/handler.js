@@ -144,19 +144,38 @@ var AssureItAgentAPI = (function () {
             }
         }
 
-        var entrys = meta.entry;
+        var actionmap = meta.actionmap;
         var entryFiles = [];
-        for (var i = 0; i < entrys.length; i++) {
-            var entry = entrys[i];
-            var entryFile = Object.keys(entry)[0] + '.ds';
+
+        for (var actionKey in actionmap) {
+            var action = actionmap[actionKey];
+            var actiontype = action["actiontype"];
+            var reaction = action["reaction"];
+
+            if ((actiontype != "monitor") && (actiontype != "boot")) {
+                continue;
+            }
+
+            var entryFile = actionKey + '.ds';
             entryFiles.push(entryFile);
 
             var entryScript = "";
             entryScript += "@Export void main() {\n";
-            if (entry[Object.keys(entry)[0]] == "monitor") {
+            if ((actiontype != null) && (actiontype == "monitor")) {
                 entryScript += "\twhile(true) {\n";
 
-                entryScript += "\t\t" + Object.keys(entry)[0] + "();\n";
+                var codegen = function () {
+                    entryScript += "\t\tDFault ret = " + actionKey + "();\n";
+                    entryScript += "\t\tif(ret == null) {\n";
+                    actionKey = action["reaction"];
+                    if ((actionKey != null) && (actionKey != "")) {
+                        action = actionmap[actionKey];
+                        codegen();
+                    }
+                    entryScript += "\t\t}\n";
+                };
+                codegen();
+
                 entryScript += "\t\tsleep 1\n";
                 entryScript += "\t}\n";
             } else {
