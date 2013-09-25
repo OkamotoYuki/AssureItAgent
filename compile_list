@@ -1,3 +1,5 @@
 src/main.ts
 src/handler.ts
+src/config.ts
+src/status.ts
 src/debug.ts

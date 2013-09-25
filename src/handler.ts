@@ -4,6 +4,7 @@ import fs = module('fs');
 import http = module('http');
 import child_process = module('child_process');
 import config = module('config');
+import status = module('status');
 import debug = module('debug');
 
 
@@ -148,8 +149,13 @@ class AssureItAgentAPI {
 		}
 	}
 
+	/* Deploy */
+	// deploy procedure which is made with D-Case
 	Deploy(params: any): void {
+		this.Kill(null);
+
 		var script: any = params.script;
+		var meta: any = params.meta;
 
 		/* script directory */
 		try {
@@ -167,30 +173,62 @@ class AssureItAgentAPI {
 			fs.mkdirSync(scriptDir);
 		}
 
+		/* set config script */
+		var configFile: string = 'config.ds';
+		var configScript: string = "";
+		configScript += 'require dshell;\n';
+		configScript += 'command sleep;\n';
+		configScript += 'const LOCATION="'+config.conf.location+'";\n';
+		fs.writeFileSync(scriptDir+'/'+configFile, configScript);
+
 		/* set main script */
-		if(!("main" in script) || !(Object.keys(script.main).length == 1)) {
+		if(!('main' in script)) {
 			this.response.SetError({ code: -1, message: "request must have one main script" });
 			this.response.Send();
 			return;
 		}
-
-		var mainFile: string = Object.keys(script.main)[0];
-		fs.writeFileSync(scriptDir+'/'+mainFile, script.main[mainFile]);
+		var mainFile: string = 'main.ds';
+		fs.writeFileSync(scriptDir+'/'+mainFile, script.main);
 
 		/* set library script */
-		if("lib" in script) {
-			for(var file in script.lib) {
-				fs.writeFileSync(scriptDir+'/'+file, script.lib[file]);
+		if('lib' in script) {
+			for(var libFile in script.lib) {
+				fs.writeFileSync(scriptDir+'/'+libFile, script.lib[libFile]);
 			}
 		}
 
+		/* set entry script */
+		var entrys: any[] = meta.entry;
+		var entryFiles: string[] = [];   // used in executing scripts
+		for(var i: number = 0; i < entrys.length; i++) {
+			var entry = entrys[i];
+			var entryFile: string = Object.keys(entry)[0]+'.ds';
+			entryFiles.push(entryFile);
+
+			var entryScript: string = "";
+			entryScript += "@Export void main() {\n";
+			if(entry[Object.keys(entry)[0]] == "monitor") {
+				entryScript += "\twhile(true) {\n";
+				entryScript += "\t\tprint('monitoring...\\n');\n";
+				entryScript += "\t\tsleep 1\n";
+				entryScript += "\t}\n";
+			}
+			else {
+				// TODO: add other case
+			}
+			entryScript += "}\n";
+
+			fs.writeFileSync(scriptDir+'/'+entryFile, entryScript);
+		}
+
 		/* execute script */
-		var command: string = "";
+		var commandHeader: string = "";
+
 		if(config.conf.runtime == 'bash') {
-			command = 'bash ';
+			commandHeader = 'bash ';
 		}
 		else if(config.conf.runtime == 'D-Shell') {
-			command = 'greentea ';
+			commandHeader = 'greentea ';
 		}
 		else {
 			this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
@@ -198,20 +236,30 @@ class AssureItAgentAPI {
 			return;
 		}
 
-		for(var file in script.lib) {
-			command += ' '+scriptDir+'/'+file;
+		commandHeader += ' '+scriptDir+'/'+configFile;
+		for(var libFile in script.lib) {
+			commandHeader += ' '+scriptDir+'/'+libFile;
 		}
-		command += ' '+scriptDir+'/'+mainFile;
+		commandHeader += ' '+scriptDir+'/'+mainFile;
 
-		child_process.exec(command, null, function(error, stdout, stderr) {
-			console.log(command);
-			console.log('====OUT====');
-			console.log(stdout);
-			console.log('===ERROR===');
-			console.log(stderr);
-		});
+		for(var i: number = 0; i < entryFiles.length; i++) {
+			var command: string = commandHeader+' '+scriptDir+'/'+entryFiles[i];
+			var child = child_process.exec(command, null, function(error, stdout, stderr) {
+				// TODO: add here
+			});
+			status.stat.children.push(child);
+		}
 
 		this.response.Send();
+	}
+
+	/* Kill */
+	// kill all process which is managed by Assure-It agent
+	Kill(params: any) {
+		for(var i: number = 0; i < status.stat.children.length; i++) {
+			status.stat.children[i].kill();
+		}
+		status.stat.children = [];
 	}
 
 }

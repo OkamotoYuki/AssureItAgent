@@ -4,10 +4,10 @@
 jsonrpc='"2.0"'
 id='0'
 method='"Deploy"'
-main='{"main.ds":"print(0);\n"}'
-lib='{"lib1.ds":"print(1);\n","lib2.ds":"print(2);\n"}'
+main='"print(LOCATION);\n"' lib='{"lib1.ds":"print(1);\n","lib2.ds":"print(2);\n"}'
 script='{"main":'$main',"lib":'$lib'}';
-params='{"script":'$script'}'
+meta='{"entry":[{"E1":"monitor"}]}'
+params='{"script":'$script',"meta":'$meta'}'
 agent_url='localhost:8081'
 
 function test() {

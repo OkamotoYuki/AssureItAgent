@@ -2,6 +2,7 @@ var fs = require('fs');
 
 var child_process = require('child_process');
 var config = require("./config");
+var status = require("./status");
 
 
 var RequestHandler = (function () {
@@ -105,6 +106,7 @@ var AssureItAgentAPI = (function () {
 
     AssureItAgentAPI.prototype.Deploy = function (params) {
         var script = params.script;
+        var meta = params.meta;
 
         try  {
             fs.statSync('/tmp/assureit-agent');
@@ -119,46 +121,82 @@ var AssureItAgentAPI = (function () {
             fs.mkdirSync(scriptDir);
         }
 
-        if (!("main" in script) || !(Object.keys(script.main).length == 1)) {
+        var configFile = 'config.ds';
+        var configScript = "";
+        configScript += 'require dshell;\n';
+        configScript += 'command sleep;\n';
+        configScript += 'const LOCATION="' + config.conf.location + '";\n';
+        fs.writeFileSync(scriptDir + '/' + configFile, configScript);
+
+        if (!('main' in script)) {
             this.response.SetError({ code: -1, message: "request must have one main script" });
             this.response.Send();
             return;
         }
+        var mainFile = 'main.ds';
+        fs.writeFileSync(scriptDir + '/' + mainFile, script.main);
 
-        var mainFile = Object.keys(script.main)[0];
-        fs.writeFileSync(scriptDir + '/' + mainFile, script.main[mainFile]);
-
-        if ("lib" in script) {
-            for (var file in script.lib) {
-                fs.writeFileSync(scriptDir + '/' + file, script.lib[file]);
+        if ('lib' in script) {
+            for (var libFile in script.lib) {
+                fs.writeFileSync(scriptDir + '/' + libFile, script.lib[libFile]);
             }
         }
 
-        var command = "";
+        var entrys = meta.entry;
+        var entryFiles = [];
+        for (var i = 0; i < entrys.length; i++) {
+            var entry = entrys[i];
+            var entryFile = Object.keys(entry)[0] + '.ds';
+            entryFiles.push(entryFile);
+
+            var entryScript = "";
+            entryScript += "@Export void main() {\n";
+            if (entry[Object.keys(entry)[0]] == "monitor") {
+                entryScript += "\twhile(true) {\n";
+                entryScript += "\t\tprint('monitoring...\\n');\n";
+                entryScript += "\t\tsleep 1\n";
+                entryScript += "\t}\n";
+            } else {
+            }
+            entryScript += "}\n";
+
+            fs.writeFileSync(scriptDir + '/' + entryFile, entryScript);
+        }
+
+        var commandHeader = "";
+
         if (config.conf.runtime == 'bash') {
-            command = 'bash ';
+            commandHeader = 'bash ';
         } else if (config.conf.runtime == 'D-Shell') {
-            command = 'greentea ';
+            commandHeader = 'greentea ';
         } else {
             this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
             this.response.Send();
             return;
         }
 
-        for (var file in script.lib) {
-            command += ' ' + scriptDir + '/' + file;
+        commandHeader += ' ' + scriptDir + '/' + configFile;
+        for (var libFile in script.lib) {
+            commandHeader += ' ' + scriptDir + '/' + libFile;
         }
-        command += ' ' + scriptDir + '/' + mainFile;
+        commandHeader += ' ' + scriptDir + '/' + mainFile;
 
-        child_process.exec(command, null, function (error, stdout, stderr) {
-            console.log(command);
-            console.log('====OUT====');
-            console.log(stdout);
-            console.log('===ERROR===');
-            console.log(stderr);
-        });
+        for (var i = 0; i < entryFiles.length; i++) {
+            var command = commandHeader + ' ' + scriptDir + '/' + entryFiles[i];
+            var child = child_process.exec(command, null, function (error, stdout, stderr) {
+            });
+            status.stat.children.push(child);
+            console.log(status.stat.children.length);
+        }
 
         this.response.Send();
+    };
+
+    AssureItAgentAPI.prototype.Kill = function (params) {
+        for (var i = 0; i < status.stat.children.length; i++) {
+            status.stat.children[i].kill();
+        }
+        status.stat.children = [];
     };
     return AssureItAgentAPI;
 })();
