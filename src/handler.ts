@@ -210,6 +210,7 @@ class AssureItAgentAPI {
 			if(entry[Object.keys(entry)[0]] == "monitor") {
 				entryScript += "\twhile(true) {\n";
 				entryScript += "\t\tprint('monitoring...\\n');\n";
+				//entryScript += "\t\t"+Object.keys(entry)[0]+"();\n";
 				entryScript += "\t\tsleep 1\n";
 				entryScript += "\t}\n";
 			}
@@ -245,7 +246,13 @@ class AssureItAgentAPI {
 		for(var i: number = 0; i < entryFiles.length; i++) {
 			var command: string = commandHeader+' '+scriptDir+'/'+entryFiles[i];
 			var child = child_process.exec(command, null, function(error, stdout, stderr) {
-				// TODO: add here
+				// do nothing
+			});
+			child.stdout.on('data', function(chunk: string) {
+				debug.outputDebugMessage(chunk);   // for debug
+			});
+			child.stderr.on('data', function(chunk: string) {
+				debug.outputErrorMessage(chunk);   // for debug
 			});
 			status.stat.children.push(child);
 		}

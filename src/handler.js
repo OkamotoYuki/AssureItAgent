@@ -3,7 +3,7 @@ var fs = require('fs');
 var child_process = require('child_process');
 var config = require("./config");
 var status = require("./status");
-
+var debug = require("./debug");
 
 var RequestHandler = (function () {
     function RequestHandler(serverRequest) {
@@ -105,6 +105,8 @@ var AssureItAgentAPI = (function () {
     };
 
     AssureItAgentAPI.prototype.Deploy = function (params) {
+        this.Kill(null);
+
         var script = params.script;
         var meta = params.meta;
 
@@ -154,6 +156,7 @@ var AssureItAgentAPI = (function () {
             if (entry[Object.keys(entry)[0]] == "monitor") {
                 entryScript += "\twhile(true) {\n";
                 entryScript += "\t\tprint('monitoring...\\n');\n";
+
                 entryScript += "\t\tsleep 1\n";
                 entryScript += "\t}\n";
             } else {
@@ -185,8 +188,13 @@ var AssureItAgentAPI = (function () {
             var command = commandHeader + ' ' + scriptDir + '/' + entryFiles[i];
             var child = child_process.exec(command, null, function (error, stdout, stderr) {
             });
+            child.stdout.on('data', function (chunk) {
+                debug.outputDebugMessage(chunk);
+            });
+            child.stderr.on('data', function (chunk) {
+                debug.outputErrorMessage(chunk);
+            });
             status.stat.children.push(child);
-            console.log(status.stat.children.length);
         }
 
         this.response.Send();
