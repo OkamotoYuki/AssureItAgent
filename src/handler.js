@@ -163,13 +163,13 @@ var AssureItAgentAPI = (function () {
             entryScript += "@Export void main() {\n";
             entryScript += "\tcommand sleep;\n";
             entryScript += "\tRuntimeContext ctx = new RuntimeContext();\n";
-            entryScript += "\tDFault fault = null;\n";
+            entryScript += "\tDFault f = null;\n";
             if ((actiontype != null) && (actiontype == "Monitor")) {
                 entryScript += "\twhile(true) {\n";
 
                 var codegen = function (indent) {
-                    entryScript += indent + "fault = " + actionKey + "(ctx);\n";
-                    entryScript += indent + "if(fault == null) {\n";
+                    entryScript += indent + "f = " + actionKey + "(ctx);\n";
+                    entryScript += indent + "if(f == null) {\n";
                     if (action != null) {
                         actionKey = action["reaction"];
                         if ((actionKey != null) && (actionKey != "")) {
