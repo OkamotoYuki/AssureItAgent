@@ -126,11 +126,8 @@ var AssureItAgentAPI = (function () {
         var configFile = 'config.ds';
         var configScript = "";
         configScript += 'require dshell;\n';
-        configScript += 'command sleep;\n';
         configScript += 'const LOCATION = "' + config.conf.location + '";\n';
-        configScript += 'let DCaseRevision = 2;\n';
-        configScript += 'let RecServer = "http://127.0.0.1:3001";\n';
-        configScript += 'let AssumedFault = "UnknownFault";\n';
+
         fs.writeFileSync(scriptDir + '/' + configFile, configScript);
 
         if (!('main' in script)) {
@@ -155,7 +152,7 @@ var AssureItAgentAPI = (function () {
             var actiontype = action["actiontype"];
             var reaction = action["reaction"];
 
-            if ((actiontype != "monitor") && (actiontype != "boot")) {
+            if ((actiontype != "Monitor") && (actiontype != "Boot")) {
                 continue;
             }
 
@@ -164,23 +161,25 @@ var AssureItAgentAPI = (function () {
 
             var entryScript = "";
             entryScript += "@Export void main() {\n";
+            entryScript += "\tcommand sleep;\n";
             entryScript += "\tRuntimeContext ctx = new RuntimeContext();\n";
-            if ((actiontype != null) && (actiontype == "monitor")) {
+            entryScript += "\tDFault fault = null;\n";
+            if ((actiontype != null) && (actiontype == "Monitor")) {
                 entryScript += "\twhile(true) {\n";
 
-                var codegen = function () {
-                    entryScript += "\t\tDFault ret = " + actionKey + "(ctx);\n";
-                    entryScript += "\t\tif(ret == null) {\n";
+                var codegen = function (indent) {
+                    entryScript += indent + "fault = " + actionKey + "(ctx);\n";
+                    entryScript += indent + "if(fault == null) {\n";
                     if (action != null) {
                         actionKey = action["reaction"];
                         if ((actionKey != null) && (actionKey != "")) {
                             action = actionmap[actionKey];
-                            codegen();
+                            codegen(indent + "\t");
                         }
                     }
-                    entryScript += "\t\t}\n";
+                    entryScript += indent + "}\n";
                 };
-                codegen();
+                codegen("\t\t");
 
                 entryScript += "\t\tsleep 1\n";
                 entryScript += "\t}\n";
