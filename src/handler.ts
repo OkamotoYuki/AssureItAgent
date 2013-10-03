@@ -226,7 +226,7 @@ class AssureItAgentAPI {
 
 				var codegen = function (indent: string) {
 					entryScript += indent + "f = "+actionKey+"(ctx);\n";
-					entryScript += indent + "if(f == null) {\n";
+					entryScript += indent + "if(f != null) {\n";
 					if(action != null) {
 						actionKey = action["reaction"];
 						if((actionKey != null) && (actionKey != "")) {

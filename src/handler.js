@@ -169,7 +169,7 @@ var AssureItAgentAPI = (function () {
 
                 var codegen = function (indent) {
                     entryScript += indent + "f = " + actionKey + "(ctx);\n";
-                    entryScript += indent + "if(f == null) {\n";
+                    entryScript += indent + "if(f != null) {\n";
                     if (action != null) {
                         actionKey = action["reaction"];
                         if ((actionKey != null) && (actionKey != "")) {
