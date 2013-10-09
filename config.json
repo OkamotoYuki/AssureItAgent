@@ -1,4 +1,5 @@
 {
   "runtime": "D-Shell",
+  "rec": "http://localhost:3001/api/2.0/",
   "location": "ServerA"
 }

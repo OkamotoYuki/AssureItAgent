@@ -127,7 +127,7 @@ var AssureItAgentAPI = (function () {
         var configScript = "";
         configScript += 'require dshell;\n';
         configScript += 'const LOCATION = "' + config.conf.location + '";\n';
-
+        configScript += 'let RECServerURL = "' + config.conf.rec + '";\n';
         fs.writeFileSync(scriptDir + '/' + configFile, configScript);
 
         if (!('main' in script)) {

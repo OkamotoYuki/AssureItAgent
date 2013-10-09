@@ -178,9 +178,7 @@ class AssureItAgentAPI {
 		var configScript: string = "";
 		configScript += 'require dshell;\n';
 		configScript += 'const LOCATION = "'+config.conf.location+'";\n';
-		//configScript += 'let DCaseRevision = 2;\n';   // TODO: move to status.stat
-		//configScript += 'let RecServer = "http://127.0.0.1:3001";\n';   // TODO: move to config.json
-		//configScript += 'let AssumedFault = "UnknownFault";\n';   // TODO: move to config.json?
+		configScript += 'let RECServerURL = "'+config.conf.rec+'";\n';
 		fs.writeFileSync(scriptDir+'/'+configFile, configScript);
 
 		/* set main script */
