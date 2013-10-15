@@ -162,13 +162,12 @@ var AssureItAgentAPI = (function () {
             var entryScript = "";
             entryScript += "@Export void main() {\n";
             entryScript += "\tcommand sleep;\n";
-            entryScript += "\tRuntimeContext ctx = new RuntimeContext();\n";
             entryScript += "\tDFault f = null;\n";
             if ((actiontype != null) && (actiontype == "Monitor")) {
                 entryScript += "\twhile(true) {\n";
 
                 var codegen = function (indent) {
-                    entryScript += indent + "f = " + actionKey + "(ctx);\n";
+                    entryScript += indent + "f = " + actionKey + "();\n";
                     entryScript += indent + "if(f != null) {\n";
                     if (action != null) {
                         actionKey = action["reaction"];
