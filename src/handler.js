@@ -135,8 +135,8 @@ var AssureItAgentAPI = (function () {
             this.response.Send();
             return;
         }
-        var mainFile = 'main.ds';
-        fs.writeFileSync(scriptDir + '/' + mainFile, script.main);
+        var definitionFile = 'definition.ds';
+        fs.writeFileSync(scriptDir + '/' + definitionFile, script.main);
 
         if ('lib' in script) {
             for (var libFile in script.lib) {
@@ -145,7 +145,7 @@ var AssureItAgentAPI = (function () {
         }
 
         var actionmap = meta.actionmap;
-        var entryFiles = [];
+        var mainFiles = [];
 
         for (var actionKey in actionmap) {
             var action = actionmap[actionKey];
@@ -156,19 +156,19 @@ var AssureItAgentAPI = (function () {
                 continue;
             }
 
-            var entryFile = actionKey + '.ds';
-            entryFiles.push(entryFile);
+            var mainFile = actionKey + '.ds';
+            mainFiles.push(mainFile);
 
-            var entryScript = "";
-            entryScript += "@Export void main() {\n";
-            entryScript += "\tcommand sleep;\n";
-            entryScript += "\tDFault f = null;\n";
+            var mainScript = "";
+            mainScript += "@Export void main() {\n";
+            mainScript += "\tcommand sleep;\n";
+            mainScript += "\tDFault f = null;\n";
             if ((actiontype != null) && (actiontype == "Monitor")) {
-                entryScript += "\twhile(true) {\n";
+                mainScript += "\twhile(true) {\n";
 
                 var codegen = function (indent) {
-                    entryScript += indent + "f = " + actionKey + "();\n";
-                    entryScript += indent + "if(f != null) {\n";
+                    mainScript += indent + "f = " + actionKey + "();\n";
+                    mainScript += indent + "if(f != null) {\n";
                     if (action != null) {
                         actionKey = action["reaction"];
                         if ((actionKey != null) && (actionKey != "")) {
@@ -176,49 +176,55 @@ var AssureItAgentAPI = (function () {
                             codegen(indent + "\t");
                         }
                     }
-                    entryScript += indent + "}\n";
+                    mainScript += indent + "}\n";
                 };
                 codegen("\t\t");
 
-                entryScript += "\t\tsleep 1\n";
-                entryScript += "\t}\n";
+                mainScript += "\t\tsleep 1\n";
+                mainScript += "\t}\n";
             } else {
             }
-            entryScript += "}\n";
+            mainScript += "}\n";
 
-            fs.writeFileSync(scriptDir + '/' + entryFile, entryScript);
+            fs.writeFileSync(scriptDir + '/' + mainFile, mainScript);
         }
 
-        var commandHeader = "";
+        var runtime = "";
 
         if (config.conf.runtime == 'bash') {
-            commandHeader = 'bash';
+            runtime = 'bash';
         } else if (config.conf.runtime == 'D-Shell') {
-            commandHeader = 'greentea';
+            runtime = 'greentea';
         } else {
             this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
             this.response.Send();
             return;
         }
 
-        commandHeader += ' ' + configFile;
+        var files = configFile;
         for (var libFile in script.lib) {
-            commandHeader += ' ' + libFile;
+            files += ' ' + libFile;
         }
-        commandHeader += ' ' + mainFile;
+        files += ' ' + definitionFile;
 
-        for (var i = 0; i < entryFiles.length; i++) {
-            var command = commandHeader + ' ' + entryFiles[i];
-            debug.outputDebugMessage(command);
-            var child = child_process.exec(command, { cwd: scriptDir }, function (error, stdout, stderr) {
+        for (var i = 0; i < mainFiles.length; i++) {
+            var entryFile = 'entry_' + i + '.ds';
+            var catCommand = 'cat ' + files + ' ' + mainFiles[i] + ' > ' + entryFile;
+            debug.outputDebugMessage(catCommand);
+
+            child_process.exec(catCommand, { cwd: scriptDir }, function (error, stdout, stderr) {
+                var runtimeCommand = runtime + ' ' + entryFile;
+                debug.outputDebugMessage(runtimeCommand);
+                var child = child_process.exec(runtimeCommand, { cwd: scriptDir }, function (error, stdout, stderr) {
+                });
+                child.stdout.on('data', function (chunk) {
+                    console.log(chunk);
+                });
+                child.stderr.on('data', function (chunk) {
+                    console.log(chunk);
+                });
+                status.stat.children.push(child);
             });
-            child.stdout.on('data', function (chunk) {
-                console.log(chunk);
-            });
-            child.stderr.on('data', function (chunk) {
-                console.log(chunk);
-            });
-            status.stat.children.push(child);
         }
 
         this.response.Send();

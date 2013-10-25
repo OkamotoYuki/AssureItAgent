@@ -181,14 +181,14 @@ class AssureItAgentAPI {
 		configScript += 'let RECServerURL = "'+config.conf.rec+'";\n';
 		fs.writeFileSync(scriptDir+'/'+configFile, configScript);
 
-		/* set main script */
+		/* set definition script */
 		if(!('main' in script)) {
 			this.response.SetError({ code: -1, message: "request must have one main script" });
 			this.response.Send();
 			return;
 		}
-		var mainFile: string = 'main.ds';
-		fs.writeFileSync(scriptDir+'/'+mainFile, script.main);
+		var definitionFile: string = 'definition.ds';
+		fs.writeFileSync(scriptDir+'/'+definitionFile, script.main);
 
 		/* set library script */
 		if('lib' in script) {
@@ -197,9 +197,9 @@ class AssureItAgentAPI {
 			}
 		}
 
-		/* set entry script */
+		/* set main script */
 		var actionmap: any[] = meta.actionmap;
-		var entryFiles: string[] = [];   // used in executing scripts
+		var mainFiles: string[] = [];   // used in executing scripts
 
 		for(var actionKey in actionmap) {
 			var action = actionmap[actionKey];
@@ -210,20 +210,20 @@ class AssureItAgentAPI {
 				continue;
 			}
 
-			var entryFile: string = actionKey+'.ds';
-			entryFiles.push(entryFile);
+			var mainFile: string = actionKey+'.ds';
+			mainFiles.push(mainFile);
 
-			var entryScript: string = "";
-			entryScript += "@Export void main() {\n";
-			entryScript += "\tcommand sleep;\n";
-			entryScript += "\tDFault f = null;\n";
+			var mainScript: string = "";
+			mainScript += "@Export void main() {\n";
+			mainScript += "\tcommand sleep;\n";
+			mainScript += "\tDFault f = null;\n";
 			if((actiontype != null) && (actiontype == "Monitor")) {
-				entryScript += "\twhile(true) {\n";
-				//entryScript += "\t\tprint('monitoring...\\n');\n";
+				mainScript += "\twhile(true) {\n";
+				//mainScript += "\t\tprint('monitoring...\\n');\n";
 
 				var codegen = function (indent: string) {
-					entryScript += indent + "f = "+actionKey+"();\n";
-					entryScript += indent + "if(f != null) {\n";
+					mainScript += indent + "f = "+actionKey+"();\n";
+					mainScript += indent + "if(f != null) {\n";
 					if(action != null) {
 						actionKey = action["reaction"];
 						if((actionKey != null) && (actionKey != "")) {
@@ -231,29 +231,29 @@ class AssureItAgentAPI {
 							codegen(indent + "\t");
 						}
 					}
-					entryScript += indent + "}\n";
+					mainScript += indent + "}\n";
 				}
 				codegen("\t\t");
 
-				entryScript += "\t\tsleep 1\n";
-				entryScript += "\t}\n";
+				mainScript += "\t\tsleep 1\n";
+				mainScript += "\t}\n";
 			}
 			else {
 				// TODO: add other case
 			}
-			entryScript += "}\n";
+			mainScript += "}\n";
 
-			fs.writeFileSync(scriptDir+'/'+entryFile, entryScript);
+			fs.writeFileSync(scriptDir+'/'+mainFile, mainScript);
 		}
 
 		/* execute script */
-		var commandHeader: string = "";
+		var runtime: string = "";
 
 		if(config.conf.runtime == 'bash') {
-			commandHeader = 'bash';
+			runtime = 'bash';
 		}
 		else if(config.conf.runtime == 'D-Shell') {
-			commandHeader = 'greentea';
+			runtime = 'greentea';
 		}
 		else {
 			this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
@@ -261,25 +261,31 @@ class AssureItAgentAPI {
 			return;
 		}
 
-		commandHeader += ' '+configFile;
+		var files: string = configFile;
 		for(var libFile in script.lib) {
-			commandHeader += ' '+libFile;
+			files += ' '+libFile;
 		}
-		commandHeader += ' '+mainFile;
+		files += ' '+definitionFile;
 
-		for(var i: number = 0; i < entryFiles.length; i++) {
-			var command: string = commandHeader+' '+entryFiles[i];
-			debug.outputDebugMessage(command);
-			var child = child_process.exec(command, { cwd: scriptDir }, function(error, stdout, stderr) {
-				// do nothing
+		for(var i: number = 0; i < mainFiles.length; i++) {
+			var entryFile: string = 'entry_'+i+'.ds';
+			var catCommand: string = 'cat '+files+' '+mainFiles[i]+' > '+entryFile;
+			debug.outputDebugMessage(catCommand);
+
+			child_process.exec(catCommand, { cwd: scriptDir }, function(error, stdout, stderr) {
+				var runtimeCommand: string = runtime+' '+entryFile;
+				debug.outputDebugMessage(runtimeCommand);
+				var child = child_process.exec(runtimeCommand, { cwd: scriptDir }, function(error, stdout, stderr) {
+					// do nothing
+				});
+				child.stdout.on('data', function(chunk: string) {
+					console.log(chunk);   // for debug
+				});
+				child.stderr.on('data', function(chunk: string) {
+					console.log(chunk);   // for debug
+				});
+				status.stat.children.push(child);
 			});
-			child.stdout.on('data', function(chunk: string) {
-				console.log(chunk);   // for debug
-			});
-			child.stderr.on('data', function(chunk: string) {
-				console.log(chunk);   // for debug
-			});
-			status.stat.children.push(child);
 		}
 
 		this.response.Send();
