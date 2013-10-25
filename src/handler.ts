@@ -250,10 +250,10 @@ class AssureItAgentAPI {
 		var commandHeader: string = "";
 
 		if(config.conf.runtime == 'bash') {
-			commandHeader = 'bash ';
+			commandHeader = 'bash';
 		}
 		else if(config.conf.runtime == 'D-Shell') {
-			commandHeader = 'greentea ';
+			commandHeader = 'greentea';
 		}
 		else {
 			this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
@@ -261,16 +261,16 @@ class AssureItAgentAPI {
 			return;
 		}
 
-		commandHeader += ' '+scriptDir+'/'+configFile;
+		commandHeader += ' '+configFile;
 		for(var libFile in script.lib) {
-			commandHeader += ' '+scriptDir+'/'+libFile;
+			commandHeader += ' '+libFile;
 		}
-		commandHeader += ' '+scriptDir+'/'+mainFile;
+		commandHeader += ' '+mainFile;
 
 		for(var i: number = 0; i < entryFiles.length; i++) {
-			var command: string = commandHeader+' '+scriptDir+'/'+entryFiles[i];
+			var command: string = commandHeader+' '+entryFiles[i];
 			debug.outputDebugMessage(command);
-			var child = child_process.exec(command, null, function(error, stdout, stderr) {
+			var child = child_process.exec(command, { cwd: scriptDir }, function(error, stdout, stderr) {
 				// do nothing
 			});
 			child.stdout.on('data', function(chunk: string) {
