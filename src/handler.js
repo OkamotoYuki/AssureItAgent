@@ -125,7 +125,6 @@ var AssureItAgentAPI = (function () {
 
         var configFile = 'config.ds';
         var configScript = "";
-        configScript += 'require dshell;\n';
         configScript += 'const LOCATION = "' + config.conf.location + '";\n';
         configScript += 'let RECServerURL = "' + config.conf.rec + '";\n';
         fs.writeFileSync(scriptDir + '/' + configFile, configScript);
@@ -194,7 +193,7 @@ var AssureItAgentAPI = (function () {
         if (config.conf.runtime == 'bash') {
             runtime = 'bash';
         } else if (config.conf.runtime == 'D-Shell') {
-            runtime = 'greentea';
+            runtime = 'dshell';
         } else {
             this.response.SetError({ code: -1, message: "Assure-It agent doesn't support such a script runtime" });
             this.response.Send();
