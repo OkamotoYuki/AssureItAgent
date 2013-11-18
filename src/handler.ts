@@ -289,6 +289,7 @@ class AssureItAgentAPI {
 				status.stat.children.push(child);
 			});
 
+			i++;
 			callback(null, null);
 		}, function() { /* do nothing */ });
 

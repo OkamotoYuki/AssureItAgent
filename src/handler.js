@@ -227,6 +227,7 @@ var AssureItAgentAPI = (function () {
                 status.stat.children.push(child);
             });
 
+            i++;
             callback(null, null);
         }, function () {
         });
