@@ -15,5 +15,8 @@
   "license": "BSD",
   "bugs": {
     "url": "https://github.com/OkamotoYuki/AssureItAgent/issues"
+  },
+  "dependencies": {
+    "async": "*"
   }
 }

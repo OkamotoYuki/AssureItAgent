@@ -1,6 +1,7 @@
 var fs = require('fs');
 
 var child_process = require('child_process');
+var async = require('async');
 var config = require("./config");
 var status = require("./status");
 var debug = require("./debug");
@@ -206,9 +207,10 @@ var AssureItAgentAPI = (function () {
         }
         files += ' ' + definitionFile;
 
-        for (var i = 0; i < mainFiles.length; i++) {
+        var i = 0;
+        async.forEach(mainFiles, function (mainFile, callback) {
             var entryFile = 'entry_' + i + '.ds';
-            var catCommand = 'cat ' + files + ' ' + mainFiles[i] + ' > ' + entryFile;
+            var catCommand = 'cat ' + files + ' ' + mainFile + ' > ' + entryFile;
             debug.outputDebugMessage(catCommand);
             var runtimeCommand = runtime + ' ' + entryFile;
             debug.outputDebugMessage(runtimeCommand);
@@ -224,7 +226,10 @@ var AssureItAgentAPI = (function () {
                 });
                 status.stat.children.push(child);
             });
-        }
+
+            callback(null, null);
+        }, function () {
+        });
 
         this.response.Send();
     };

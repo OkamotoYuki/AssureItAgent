@@ -1,8 +1,10 @@
 ///<reference path='../d.ts/DefinitelyTyped/node/node.d.ts'/>
+///<reference path='../d.ts/DefinitelyTyped/async/async.d.ts'/>
 
 import fs = module('fs');
 import http = module('http');
 import child_process = module('child_process');
+import async = module('async');
 import config = module('config');
 import status = module('status');
 import debug = module('debug');
@@ -266,9 +268,10 @@ class AssureItAgentAPI {
 		}
 		files += ' '+definitionFile;
 
-		for(var i: number = 0; i < mainFiles.length; i++) {
+		var i: number = 0;
+		async.forEach(mainFiles, function(mainFile, callback) {
 			var entryFile: string = 'entry_'+i+'.ds';
-			var catCommand: string = 'cat '+files+' '+mainFiles[i]+' > '+entryFile;
+			var catCommand: string = 'cat '+files+' '+mainFile+' > '+entryFile;
 			debug.outputDebugMessage(catCommand);
 			var runtimeCommand: string = runtime+' '+entryFile;
 			debug.outputDebugMessage(runtimeCommand);
@@ -285,7 +288,9 @@ class AssureItAgentAPI {
 				});
 				status.stat.children.push(child);
 			});
-		}
+
+			callback(null, null);
+		}, function() { /* do nothing */ });
 
 		this.response.Send();
 	}
