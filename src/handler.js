@@ -210,10 +210,10 @@ var AssureItAgentAPI = (function () {
             var entryFile = 'entry_' + i + '.ds';
             var catCommand = 'cat ' + files + ' ' + mainFiles[i] + ' > ' + entryFile;
             debug.outputDebugMessage(catCommand);
+            var runtimeCommand = runtime + ' ' + entryFile;
+            debug.outputDebugMessage(runtimeCommand);
 
             child_process.exec(catCommand, { cwd: scriptDir }, function (error, stdout, stderr) {
-                var runtimeCommand = runtime + ' ' + entryFile;
-                debug.outputDebugMessage(runtimeCommand);
                 var child = child_process.exec(runtimeCommand, { cwd: scriptDir }, function (error, stdout, stderr) {
                 });
                 child.stdout.on('data', function (chunk) {

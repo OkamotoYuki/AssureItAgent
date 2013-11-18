@@ -270,10 +270,10 @@ class AssureItAgentAPI {
 			var entryFile: string = 'entry_'+i+'.ds';
 			var catCommand: string = 'cat '+files+' '+mainFiles[i]+' > '+entryFile;
 			debug.outputDebugMessage(catCommand);
+			var runtimeCommand: string = runtime+' '+entryFile;
+			debug.outputDebugMessage(runtimeCommand);
 
 			child_process.exec(catCommand, { cwd: scriptDir }, function(error, stdout, stderr) {
-				var runtimeCommand: string = runtime+' '+entryFile;
-				debug.outputDebugMessage(runtimeCommand);
 				var child = child_process.exec(runtimeCommand, { cwd: scriptDir }, function(error, stdout, stderr) {
 					// do nothing
 				});
